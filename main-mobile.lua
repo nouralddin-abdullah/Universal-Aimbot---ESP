@@ -146,7 +146,7 @@ function ConfigManager.GetCurrentConfig()
                 TeamCheck = Aimbot.Settings.TeamCheck,
                 AliveCheck = Aimbot.Settings.AliveCheck,
                 WallCheck = Aimbot.Settings.WallCheck,
-                Toggle = Aimbot.Settings.Toggle,
+                Toggle = true,
                 LockPart = Aimbot.Settings.LockPart,
                 LockMode = Aimbot.Settings.LockMode,
                 Sensitivity = Aimbot.Settings.Sensitivity,
@@ -258,13 +258,14 @@ function ConfigManager.ApplyConfig(config)
             Aimbot.Settings.TeamCheck = config.Aimbot.Settings.TeamCheck
             Aimbot.Settings.AliveCheck = config.Aimbot.Settings.AliveCheck
             Aimbot.Settings.WallCheck = config.Aimbot.Settings.WallCheck
-            Aimbot.Settings.Toggle = config.Aimbot.Settings.Toggle
+            Aimbot.Settings.Toggle = true
             Aimbot.Settings.LockPart = config.Aimbot.Settings.LockPart
             Aimbot.Settings.LockMode = config.Aimbot.Settings.LockMode
             Aimbot.Settings.Sensitivity = config.Aimbot.Settings.Sensitivity
             Aimbot.Settings.Sensitivity2 = config.Aimbot.Settings.Sensitivity2
             Aimbot.Settings.OffsetToMoveDirection = config.Aimbot.Settings.OffsetToMoveDirection
             Aimbot.Settings.OffsetIncrement = config.Aimbot.Settings.OffsetIncrement
+            Aimbot.Settings.TriggerKey = nil
         end
         
         if config.Aimbot.FOVSettings then
@@ -469,7 +470,8 @@ function ConfigManager.UpdateGUIFromConfig(config, guiElements)
             pcall(function() if guiElements.Aimbot_TeamCheck then guiElements.Aimbot_TeamCheck:Set(config.Aimbot.Settings.TeamCheck) end end)
             pcall(function() if guiElements.Aimbot_AliveCheck then guiElements.Aimbot_AliveCheck:Set(config.Aimbot.Settings.AliveCheck) end end)
             pcall(function() if guiElements.Aimbot_WallCheck then guiElements.Aimbot_WallCheck:Set(config.Aimbot.Settings.WallCheck) end end)
-            pcall(function() if guiElements.Aimbot_Toggle then guiElements.Aimbot_Toggle:Set(config.Aimbot.Settings.Toggle) end end)
+            pcall(function() if guiElements.Aimbot_Toggle then guiElements.Aimbot_Toggle:Set(true) end end)
+            pcall(function() if guiElements.Aimbot_TriggerKey then guiElements.Aimbot_TriggerKey:Set("On-Screen Button") end end)
             pcall(function() if guiElements.Aimbot_LockPart then guiElements.Aimbot_LockPart:Set(config.Aimbot.Settings.LockPart) end end)
             
             -- Lock Mode dropdown
@@ -1059,7 +1061,7 @@ local AimbotTab = Window:CreateTab({
     Icon = "🎯"
 })
 
--- Load Mobile Aimbot Library with error handling
+-- Load Aimbot Library with error handling
 local aimbotLoadSuccess = pcall(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/nouralddin-abdullah/99-night/refs/heads/main/AimbotV3-mobile.lua"))()
 end)
@@ -1074,16 +1076,13 @@ if not aimbotLoadSuccess or not Aimbot then
         Content = "The aimbot library failed to load or is not compatible with this game/executor."
     })
 else
+    Aimbot.Settings.Toggle = true
+    Aimbot.Settings.TriggerKey = nil
 
 --=============================================================================--
 --                          AIMBOT ACTIONS
 --=============================================================================--
 AimbotTab:CreateSection("Aimbot Actions")
-
-AimbotTab:CreateParagraph({
-    Title = "📱 Mobile Aimbot",
-    Content = "This is the mobile-optimized version! When you load the aimbot, a draggable target button (🎯) will appear on the right side. Tap it to toggle aimbot on/off!"
-})
 
 AimbotTab:CreateButton({
     Name = "Load Aimbot",
@@ -1154,32 +1153,32 @@ GUIElements.Aimbot_WallCheck = AimbotTab:CreateToggle({
 })
 
 GUIElements.Aimbot_Toggle = AimbotTab:CreateToggle({
-    Name = "Toggle Mode",
-    CurrentValue = false,
+    Name = "Toggle Mode (Always On)",
+    CurrentValue = true,
     Flag = "Aimbot_Toggle",
     Callback = function(value)
-        ExunysDeveloperAimbot.Settings.Toggle = value
+        if not value then
+            task.defer(function()
+                if GUIElements.Aimbot_Toggle then
+                    GUIElements.Aimbot_Toggle:Set(true)
+                end
+            end)
+        end
+
+        ExunysDeveloperAimbot.Settings.Toggle = true
     end
 })
 
+AimbotTab:CreateLabel("Tap the floating 🎯 button to start or stop targeting.")
+
 GUIElements.Aimbot_TriggerKey = AimbotTab:CreateDropdown({
-    Name = "Trigger Key",
-    Options = {"MouseButton1", "MouseButton2", "E", "Q", "C", "V", "X", "Z"},
-    Default = "MouseButton2",
+    Name = "Activation",
+    Options = {"On-Screen Button"},
+    Default = "On-Screen Button",
     Multi = false,
     Flag = "Aimbot_TriggerKey",
-    Callback = function(value)
-        local keyMap = {
-            ["MouseButton1"] = Enum.UserInputType.MouseButton1,
-            ["MouseButton2"] = Enum.UserInputType.MouseButton2,
-            ["E"] = Enum.KeyCode.E,
-            ["Q"] = Enum.KeyCode.Q,
-            ["C"] = Enum.KeyCode.C,
-            ["V"] = Enum.KeyCode.V,
-            ["X"] = Enum.KeyCode.X,
-            ["Z"] = Enum.KeyCode.Z
-        }
-        ExunysDeveloperAimbot.Settings.TriggerKey = keyMap[value] or Enum.UserInputType.MouseButton2
+    Callback = function()
+        ExunysDeveloperAimbot.Settings.TriggerKey = nil
     end
 })
 
